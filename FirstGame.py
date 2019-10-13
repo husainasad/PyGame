@@ -10,10 +10,10 @@ y=50
 width=20
 height=40
 vel=5
-rgb=(0,255,0)
+rgb = (0,255,0)
 run = True
 while run:
-	pygame.time.delay(30)
+	pygame.time.delay(30) #change value for fast/slow movement
 
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
@@ -37,7 +37,6 @@ while run:
 		y+=vel
 		if y+height>500:
 			y=500-height
-
 	win.fill((0,0,0))
 	pygame.draw.rect(win, rgb, (x,y,width,height))
 	pygame.display.update()
