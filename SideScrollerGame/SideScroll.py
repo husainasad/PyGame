@@ -3,6 +3,7 @@ from pygame.locals import *
 import os
 import sys
 import math
+import random
 
 pygame.init()
 
@@ -62,40 +63,83 @@ class player(object):
             win.blit(self.run[self.runCount//6], (self.x,self.y))
             self.runCount += 1
 
+class saw(object):
+    img =  [pygame.image.load('SAW0.png'),pygame.image.load('SAW1.png'),pygame.image.load('SAW2.png'),pygame.image.load('SAW3.png')]
+    def __init__(self,x,y,width,height):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.hitbox = (x, y, width, height)
+        self.count = 0
+
+    def draw(self, win):
+        self.hitbox = (self.x + 5, self.y + 5, self.width - 10 ,self.height)
+        if self.count >= 8:
+            self.count = 0
+        win.blit(pygame.transform.scale(self.img[self.count//2], (64, 64)), (self.x, self.y))
+        self.count += 1
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
+class spike(saw):
+    img =  pygame.image.load('spike.png')
+    def draw(self,win):
+        self.hitbox = (self.x + 10, self.y, 28 ,315)
+        win.blit(self.img, (self.x ,self.y))
+        pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
 def redrawWindow():
-	win.blit(bg, (bgX,0))
-	win.blit(bg, (bgX2,0))
-	runner.draw(win)
-	pygame.display.update()
+    win.blit(bg, (bgX,0))
+    win.blit(bg, (bgX2,0))
+    runner.draw(win)
+    for x in objects:
+        x.draw(win)
+    pygame.display.update()
 
 runner = player(200,313,64,64)
-
 pygame.time.set_timer(USEREVENT + 1,500)
+pygame.time.set_timer(USEREVENT + 2,random.randrange(3000,5000))
 speed = 30
 run = True
+
+objects = []
+
 while run:
-	redrawWindow()
-	bgX -= 1.4
-	bgX2 -= 1.4
-	if bgX < bg.get_width() * -1:
-		bgX = bg.get_width()
-	if bgX2 < bg.get_width() * -1:
-		bgX2 = bg.get_width()	
-	for event in pygame.event.get():
-		if event.type ==pygame.QUIT:
-			run = False
-			pygame.quit()
-			quit()
-		if event.type == USEREVENT + 1:
-			speed +=2
+    redrawWindow()
 
-	keys = pygame.key.get_pressed()
-	if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
-		if not (runner.jumping):
-			runner.jumping = True
+    for objectt in objects:
+        objectt.x -= 1.4
+        if objectt.x < objectt.width * -1:
+            objects.pop(objects.index(objectt))
 
-	if keys[pygame.K_DOWN]:
-		if not (runner.sliding):
-			runner.sliding = True
+    bgX -= 1.4
+    bgX2 -= 1.4
+    if bgX < bg.get_width() * -1:
+        bgX = bg.get_width()
+    if bgX2 < bg.get_width() * -1:
+        bgX2 = bg.get_width()   
+    for event in pygame.event.get():
+        if event.type ==pygame.QUIT:
+            run = False
+            pygame.quit()
+            quit()
+        if event.type == USEREVENT + 1:
+            speed +=2
 
-	clock.tick(speed)
+        if event.type == USEREVENT + 2:
+            r = random.randrange(0,2)
+            if r == 0:
+                objects.append(saw(810,310,64,64))
+            else:
+                objects.append(spike(810,0,48,320))
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_SPACE] or keys[pygame.K_UP]:
+        if not (runner.jumping):
+            runner.jumping = True
+
+    if keys[pygame.K_DOWN]:
+        if not (runner.sliding):
+            runner.sliding = True
+
+    clock.tick(speed)
