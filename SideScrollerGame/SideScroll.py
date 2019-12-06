@@ -21,6 +21,7 @@ class player(object):
     run = [pygame.image.load('8.png'),pygame.image.load('9.png'),pygame.image.load('10.png'),pygame.image.load('11.png'),pygame.image.load('12.png'),pygame.image.load('13.png'),pygame.image.load('14.png'),pygame.image.load('15.png')]
     jump = [pygame.image.load('1.png'),pygame.image.load('2.png'),pygame.image.load('3.png'),pygame.image.load('4.png'),pygame.image.load('5.png'),pygame.image.load('6.png'),pygame.image.load('7.png')]
     slide = [pygame.image.load('S1.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S2.png'),pygame.image.load('S3.png'),pygame.image.load('S4.png'),pygame.image.load('S5.png'),]
+    fall = pygame.image.load('0.png')
     jumpList = [1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4]
     def __init__(self, x, y, width, height):
         self.x = x
@@ -33,6 +34,7 @@ class player(object):
         self.jumpCount = 0
         self.runCount = 0
         self.slideUp = False
+        self.falling = False
 
     def draw(self, win):
         if self.jumping:
@@ -43,6 +45,7 @@ class player(object):
                 self.jumpCount = 0
                 self.jumping = False
                 self.runCount = 0
+            self.hitbox = (self.x + 4, self.y, self.width-24, self.height-10)
         elif self.sliding or self.slideUp:
             if self.slideCount < 20:
                 self.y += 1
@@ -50,18 +53,25 @@ class player(object):
                 self.y -= 19
                 self.sliding = False
                 self.slideUp = True
+            elif self.slideCount > 20 and self.slideCount <80:
+                self.hitbox = (self.x, self.y + 3, self.width-8, self.height-35)
             if self.slideCount >= 110:
                 self.slideCount = 0
                 self.slideUp = False
                 self.runCount = 0
+                self.hitbox = (self.x + 4, self.y, self.width-24, self.height-10)
             win.blit(self.slide[self.slideCount//10], (self.x,self.y))
             self.slideCount += 1
-            
+
+        elif self.falling:
+            win.blit(self.fall, (self.x, self.y + 30))    
         else:
             if self.runCount > 42:
                 self.runCount = 0
             win.blit(self.run[self.runCount//6], (self.x,self.y))
             self.runCount += 1
+            self.hitbox = (self.x + 4, self.y, self.width-24, self.height-13)
+        pygame.draw.rect(win, (250,0,0), self.hitbox, 2)
 
 class saw(object):
     img =  [pygame.image.load('SAW0.png'),pygame.image.load('SAW1.png'),pygame.image.load('SAW2.png'),pygame.image.load('SAW3.png')]
@@ -81,12 +91,24 @@ class saw(object):
         self.count += 1
         pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
 
+    def collide(self, rect):
+        if rect[0] + rect[2] > self.hitbox[0] and rect[0] < self.hitbox[0] + self.hitbox[2]:
+            if rect[1] + rect[3] > self.hitbox[1]:
+                return True
+        return False
+
 class spike(saw):
     img =  pygame.image.load('spike.png')
     def draw(self,win):
         self.hitbox = (self.x + 10, self.y, 28 ,315)
         win.blit(self.img, (self.x ,self.y))
         pygame.draw.rect(win, (255,0,0), self.hitbox, 2)
+
+    def collide(self, rect):
+        if rect[0] + rect[2] > self.hitbox[0] and rect[0] < self.hitbox[0] + self.hitbox[2]:
+            if rect[1] < self.hitbox[3]:
+                return True
+        return False
 
 def redrawWindow():
     win.blit(bg, (bgX,0))
@@ -95,6 +117,9 @@ def redrawWindow():
     for x in objects:
         x.draw(win)
     pygame.display.update()
+
+def reset():
+    pass
 
 runner = player(200,313,64,64)
 pygame.time.set_timer(USEREVENT + 1,500)
@@ -108,6 +133,9 @@ while run:
     redrawWindow()
 
     for objectt in objects:
+        if objectt.collide(runner.hitbox):
+            runner.falling = True
+            
         objectt.x -= 1.4
         if objectt.x < objectt.width * -1:
             objects.pop(objects.index(objectt))
